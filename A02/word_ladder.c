@@ -4,8 +4,9 @@
 // Second practical assignement (speed run)
 //
 // Place your student numbers and names here
-//   N.Mec. XXXXXX  Name: XXXXXXX
-//
+//   N.Mec. 107457  Name: Diana Miranda
+//  N.Mec. 107403  Name: João Luís
+
 // Do as much as you can
 //   1) MANDATORY: complete the hash table code
 //      *) hash_table_create
@@ -39,6 +40,8 @@
 //      *) graph_info
 //   8) OPTIONAL: test for memory leaks
 //
+
+// gcc -Wall -o word_ladder word_ladder.c
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -171,6 +174,15 @@ static hash_table_t *hash_table_create(void)
   //
   // complete this
   //
+  hash_table->hash_table_size = i;
+  hash_table->number_of_entries = 0;
+
+  hash_table->heads = (hash_table_node_t**) calloc(hash_table->heads, sizeof(hash_table_node_t*));
+  
+  for(int x=0; x<hash_table->hash_table_size; x++)
+  {
+    hash_table->heads[x] = NULL;
+  }
   return hash_table;
 }
 
