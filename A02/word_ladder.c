@@ -4,9 +4,8 @@
 // Second practical assignement (speed run)
 //
 // Place your student numbers and names here
-//   N.Mec. 107457  Name: Diana Miranda
-//  N.Mec. 107403  Name: João Luís
-
+//   N.Mec. XXXXXX  Name: XXXXXXX
+//
 // Do as much as you can
 //   1) MANDATORY: complete the hash table code
 //      *) hash_table_create
@@ -40,8 +39,6 @@
 //      *) graph_info
 //   8) OPTIONAL: test for memory leaks
 //
-
-// gcc -Wall -o word_ladder word_ladder.c
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -173,16 +170,16 @@ static hash_table_t *hash_table_create(void)
   }
   //
   // complete this
-  //
-  hash_table->hash_table_size = i;
+  hash_table->hash_table_size = 100;
   hash_table->number_of_entries = 0;
+  hash_table->number_of_edges = 0;
+  hash_table->heads = (hash_table_node_t **)malloc((size_t)hash_table->hash_table_size * sizeof(hash_table_node_t *));
 
-  hash_table->heads = (hash_table_node_t**) calloc(hash_table->heads, sizeof(hash_table_node_t*));
-  
-  for(int x=0; x<hash_table->hash_table_size; x++)
-  {
-    hash_table->heads[x] = NULL;
-  }
+
+  for (i = 0u; i < hash_table->hash_table_size; i++)
+    hash_table->heads[i] = NULL;
+
+  //
   return hash_table;
 }
 
@@ -209,10 +206,65 @@ static hash_table_node_t *find_word(hash_table_t *hash_table,const char *word,in
   i = crc32(word) % hash_table->hash_table_size;
   //
   // complete this
-  //
-  return node;
+  node = hash_table->heads[i];
+
+  while (node != NULL)
+  {
+    if (strcmp(node->word, word) == 0)
+      return node;
+    node = node->next;
+  }
+
+  return NULL;
 }
 
+//Acrescentei estas funções---------------------------------------------------
+void add_word(hash_table_t *hash_table,const char *word)
+{
+  hash_table_node_t* node = find_word(hash_table,word,1);
+  if(node != NULL){
+    node->head++;
+    return;
+  }
+
+  node = allocate_hash_table_node();
+  strcpy(node->word, word);
+  node->head=1;
+  insert_hash_table_node(node, hash_table);
+}
+
+void insert_hash_table_node(hash_table_node_t* node, hash_table_t *hash_table){
+  unsigned int i = crc32(node->word) % hash_table->hash_table_size;
+  node->next = hash_table->heads[i];
+  hash_table->heads[i] = node;
+  hash_table->number_of_entries++;
+  if(hash_table->number_of_entries > hash_table->hash_table_size)
+    hash_table_grow(hash_table);
+}
+
+void print_table(hash_table_t *hash_table)
+{
+    for (int i = 0; i < hash_table->hash_table_size; i++)
+    {
+        if (hash_table->heads[i] == NULL)
+        {
+            printf("\t%i\t---\n", i);
+        }
+        else
+        {
+            printf("\t%i\t", i);
+            hash_table_node_t *tmp = hash_table->heads[i];
+            while (tmp != NULL)
+            {
+                printf("%s -", tmp->word);
+                tmp = tmp->next;
+            }
+            printf("\n");
+        }
+    }
+}
+
+//------------------------------------------------------------
 
 //
 // add edges to the word ladder graph (mostly do be done)
@@ -409,6 +461,7 @@ int main(int argc,char **argv)
 
   // initialize hash table
   hash_table = hash_table_create();
+  //printf("hash table size: %u\n",hash_table->hash_table_size);
   // read words
   fp = fopen((argc < 2) ? "wordlist-big-latest.txt" : argv[1],"rb");
   if(fp == NULL)
@@ -417,8 +470,22 @@ int main(int argc,char **argv)
     exit(1);
   }
   while(fscanf(fp,"%99s",word) == 1)
-    (void)find_word(hash_table,word,1);
+  {
+    // Acrescentei esta parte só para ver como é q se meti as palavras na hash table
+    if(find_word(hash_table,word,0) != NULL)
+      continue;
+    add_word(hash_table,word);
+    //-------------------------------------
+
+    //esta linha já estava no código do professor
+    //(void)find_word(hash_table,word,1);
+    
+  }
+    
   fclose(fp);
+
+  //printf("hash table size: %u\n",hash_table->hash_table_size);
+  print_table(hash_table);
   // find all similar words
   for(i = 0u;i < hash_table->hash_table_size;i++)
     for(node = hash_table->heads[i];node != NULL;node = node->next)
