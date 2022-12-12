@@ -43,6 +43,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 //
 // static configuration
@@ -60,7 +61,7 @@ typedef struct hash_table_s hash_table_t;
 
 struct adjacency_node_s
 {
-  adjacency_node_t *next;    // link to th enext adjacency list node
+  adjacency_node_t *next;    // link to the next adjacency list node
   hash_table_node_t *vertex; // the other vertex
 };
 
@@ -225,6 +226,7 @@ static void hash_table_free(hash_table_t *hash_table)
       node = next;
     }
   }
+
   free(hash_table->heads);
   free(hash_table);
 }
@@ -237,46 +239,39 @@ static hash_table_node_t *find_word(hash_table_t *hash_table, const char *word, 
   i = crc32(word) % hash_table->hash_table_size;
   //
   // complete this
-  node = hash_table->heads[i];
-  while (node != NULL)
+
+  if (insert_if_not_found)
   {
-    if (strcmp(node->word, word) == 0)
+
+    node = allocate_hash_table_node();
+    strcpy(node->word, word);
+
+    node->next = hash_table->heads[i];
+    hash_table->heads[i] = node;
+
+    if (hash_table->number_of_entries > hash_table->hash_table_size / 2)
+      hash_table_grow(hash_table);
+
+    hash_table->number_of_entries++;
+  }
+  else
+  {
+    node = hash_table->heads[i];
+    while (node != NULL)
     {
-      printf("Encontrei a palavra %s\n", word);
-      return node;
+      if (strcmp(node->word, word) == 0)
+      {
+        // printf("Encontrei a palavra %s \n", word);
+        return node;
+      }
+      node = node->next;
     }
-    node = node->next;
   }
 
   return NULL;
 }
 
 // Acrescentei estas funções---------------------------------------------------
-void add_word(hash_table_t *hash_table, const char *word)
-{
-  hash_table_node_t *node = find_word(hash_table, word, 1);
-  if (node != NULL)
-  {
-    node->head++;
-    return;
-  }
-
-  node = allocate_hash_table_node();
-  strcpy(node->word, word);
-  node->head = 1;
-  insert_hash_table_node(node, hash_table);
-}
-
-void insert_hash_table_node(hash_table_node_t *node, hash_table_t *hash_table)
-{
-  unsigned int i = crc32(node->word) % hash_table->hash_table_size;
-  node->next = hash_table->heads[i];
-  hash_table->heads[i] = node;
-  hash_table->number_of_entries++;
-  if (hash_table->number_of_entries > hash_table->hash_table_size / 2)
-    hash_table_grow(hash_table);
-}
-
 void print_table(hash_table_t *hash_table)
 {
   for (int i = 0; i < hash_table->hash_table_size; i++)
@@ -313,17 +308,12 @@ static hash_table_node_t *find_representative(hash_table_node_t *node)
   // complete this
   //
 
-  int i, j, k;
-  // find (linked list done with index numbers!)
-  for (i = vertex_number; i != g->vertices[i].representative; i = g->vertices[i].representative)
-    ;
-  // path compression
-  for (j = vertex_number; j != i; j = k)
-  {
-    k = g->vertices[j].representative;
-    g->vertices[j].representative = i;
-  }
-  return i;
+  representative = node;
+  next_node = node->representative;
+  node->representative = representative;
+  node = next_node;
+
+  return representative;
 }
 
 static void add_edge(hash_table_t *hash_table, hash_table_node_t *from, const char *word)
@@ -332,9 +322,27 @@ static void add_edge(hash_table_t *hash_table, hash_table_node_t *from, const ch
   adjacency_node_t *link;
 
   to = find_word(hash_table, word, 0);
+
   //
   // complete this
   //
+
+  if (to != NULL)
+  {
+    from_representative = find_representative(from);
+    to_representative = find_representative(to);
+    if (from_representative != to_representative)
+    {
+      link = allocate_adjacency_node();
+      link->vertex = to_representative;
+      link->next = from_representative->head;
+      from_representative->head = link;
+      to_representative->representative = from_representative;
+
+      printf("link - %s \n", link->vertex);
+    }
+    printf("Adicionei a aresta %s - %s\n", from, to);
+  }
 }
 
 //
@@ -430,6 +438,10 @@ static int breadh_first_search(int maximum_number_of_vertices, hash_table_node_t
 {
   // complete this
   // shortest path between two words using breadh_first_search algorithm
+
+
+
+
   return -1;
 }
 
@@ -445,6 +457,19 @@ static void list_connected_component(hash_table_t *hash_table, const char *word)
 
   // print the list
   printf("connected component of %s:\n", word);
+
+  hash_table_node_t *to = find_word(hash_table, word, 0);
+
+  printf("word %s", to);
+  if (to == NULL)
+  {
+    printf("word not found\n");
+
+    return;
+  }
+
+  int visited = breadh_first_search(hash_table->number_of_edges, hash_table->heads, word, NULL);
+
 }
 
 //
@@ -476,6 +501,17 @@ static void path_finder(hash_table_t *hash_table, const char *from_word, const c
 
   // print the path
   printf("path from %s to %s:\n", from_word, to_word);
+
+  int path = breadh_first_search(hash_table->number_of_edges, hash_table->heads, from_word, to_word);
+  if(path == -1){
+    printf("no path found");
+  }
+  else{
+    for(int i = 0; i < path; i++){
+      
+      printf("breath - %s ", hash_table->heads[i]->visited);
+    }
+  } 
 }
 
 //
@@ -515,12 +551,12 @@ int main(int argc, char **argv)
   while (fscanf(fp, "%99s", word) == 1)
   {
     // Acrescentei esta parte só para ver como é q se meti as palavras na hash table
-    if (find_word(hash_table, word, 0) != NULL)
+    /*if (find_word(hash_table, word, 0) != NULL)
       continue;
-    add_word(hash_table, word);
+    add_word(hash_table, word);*/
     //-------------------------------------
     // esta linha já estava no código do professor
-    //(void)find_word(hash_table,word,1);
+    (void)find_word(hash_table, word, 1);
   }
 
   fclose(fp);
