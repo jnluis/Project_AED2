@@ -4,7 +4,8 @@
 // Second practical assignement (speed run)
 //
 // Place your student numbers and names here
-//   N.Mec. XXXXXX  Name: XXXXXXX
+//   N.Mec. 107403 Name: João Luís
+//   N.Mec. 107457 Name: Diana Miranda
 //
 // Do as much as you can
 //   1) MANDATORY: complete the hash table code
@@ -151,7 +152,7 @@ unsigned int crc32(const char *str)
   crc = 0xAED02022u; // initial value (chosen arbitrarily)
   while (*str != '\0')
     crc = (crc >> 8) ^ table[crc & 0xFFu] ^ ((unsigned int)*str++ << 24);
-  return crc;
+  return crc; // depois é preciso dividir pelo hash_table_size
 }
 
 static hash_table_t *hash_table_create(void)
@@ -460,7 +461,7 @@ static void list_connected_component(hash_table_t *hash_table, const char *word)
 
   hash_table_node_t *to = find_word(hash_table, word, 0);
 
-  printf("word %s", to);
+  printf("word %s \n", to);
   if (to == NULL)
   {
     printf("word not found\n");
@@ -504,7 +505,7 @@ static void path_finder(hash_table_t *hash_table, const char *from_word, const c
 
   int path = breadh_first_search(hash_table->number_of_edges, hash_table->heads, from_word, to_word);
   if(path == -1){
-    printf("no path found");
+    printf("no path found \n");
   }
   else{
     for(int i = 0; i < path; i++){
