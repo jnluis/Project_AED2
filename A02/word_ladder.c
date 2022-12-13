@@ -307,6 +307,14 @@ static hash_table_node_t *find_representative(hash_table_node_t *node)
   //
   // complete this
   //
+  int i, j, k;
+  for(i = node;i != representative->representative; i = representative->representative)
+  ;
+  for(i=node; j != i; j=k){
+    k= representative->representative;
+    
+
+  }
 
   representative = node;
   next_node = node->representative;
@@ -439,7 +447,7 @@ static int breadh_first_search(int maximum_number_of_vertices, hash_table_node_t
   // complete this
   // shortest path between two words using breadh_first_search algorithm
 
-
+  adjacency_node_t *adjacency_node;
 
 
   return -1;
