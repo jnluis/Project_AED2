@@ -225,11 +225,17 @@ static void hash_table_free(hash_table_t *hash_table)
     hash_table_node_t *node = hash_table->heads[i];
     while (node != NULL)
     {
+      /*
       while (node->head != NULL)
       {
         adjacency_node_t *next_head = node->head->next;
         free_adjacency_node(node->head);
         node->head = next_head;
+      }
+      */
+      if (node->head != NULL)
+      {
+        free_adjacency_node(node->head);
       }
 
       hash_table_node_t *next = node->next;
@@ -352,6 +358,7 @@ static void add_edge(hash_table_t *hash_table, hash_table_node_t *from, const ch
   //
   // complete this
   //
+  /*
   if (to != NULL)
   {
 
@@ -366,8 +373,9 @@ static void add_edge(hash_table_t *hash_table, hash_table_node_t *from, const ch
 
     // printf("Adicionei a aresta %s - %s\n", from, to);
   }
+  */
 
-  /*  if (to != NULL)
+  if (to != NULL)
   {
     from_representative = find_representative(from);
     to_representative = find_representative(to);
@@ -378,11 +386,14 @@ static void add_edge(hash_table_t *hash_table, hash_table_node_t *from, const ch
       link->next = from_representative->head;
       from_representative->head = link;
       to_representative->representative = from_representative;
+      hash_table->number_of_edges++;
+      from_representative->number_of_edges++;
+      to_representative->number_of_edges++;
 
-      //printf("link - %s \n", link->vertex);
+      // printf("link - %s \n", link->vertex);
     }
     // printf("Adicionei a aresta %s - %s\n", from, to);
-  } */
+  }
 }
 
 //
@@ -518,18 +529,18 @@ static void list_connected_component(hash_table_t *hash_table, const char *word)
     printf("word not found\n");
     return;
   }
+
   printf("numero de vertices da plavra %s - %d \n", word, to->number_of_edges);
-  printf("connected component of %s:\n", word);
-  int edges = to->number_of_edges;
-  while (edges > 0)
+
+  /* ERRADO
+    while (edges > 0)
   {
     printf("word %s \n", to->head->vertex);
     printf("numero de vertices da plavra %s - %d \n", to->word, edges);
     edges--;
 
   }
-  
-
+  */
 }
 
 //
@@ -657,9 +668,14 @@ int main(int argc, char **argv)
       path_finder(hash_table, from, to);
     }
     else if (command == 3)
+    {
+      printf("fim\n");
       break;
+    }
   }
+
   // clean up
   hash_table_free(hash_table);
+  printf("limpei a tabela\n");
   return 0;
 }
