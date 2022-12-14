@@ -621,7 +621,7 @@ static void path_finder(hash_table_t *hash_table, const char *from_word, const c
 
   
   printf("path from %s to %s:\n", from_word, to_word);
-  printf("%d \n",hash_table->number_of_entries);
+  printf("numero de entradas - %d \n",hash_table->number_of_entries);
 
   int path = breadh_first_search(hash_table->number_of_entries, hash_table->heads, from_word, to_word);
   printf("path %d \n", path); 
