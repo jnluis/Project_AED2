@@ -464,6 +464,7 @@ static int breadh_first_search(int maximum_number_of_vertices, hash_table_node_t
   // while curre
   if (goal == NULL)
   {
+    printf("Goal == NULL\n");
     return -1;
   }
 
@@ -482,6 +483,7 @@ static int breadh_first_search(int maximum_number_of_vertices, hash_table_node_t
     {
       current->visited = 1;
       visited++;
+      printf("current != NULL\n");
     }
 
     if (current->next != NULL)
@@ -492,6 +494,7 @@ static int breadh_first_search(int maximum_number_of_vertices, hash_table_node_t
         next->previous = current;
         next->visited = 1;
         visited++;
+        printf("current->next != NULL\n");
       }
     }
 
@@ -503,6 +506,7 @@ static int breadh_first_search(int maximum_number_of_vertices, hash_table_node_t
         previous->previous = current;
         previous->visited = 1;
         visited++;
+        printf("current->previous != NULL\n");
       }
     }
 
@@ -515,6 +519,7 @@ static int breadh_first_search(int maximum_number_of_vertices, hash_table_node_t
           current->previous = current;
           current->visited = 1;
           visited++;
+          printf("current->head != NULL\n");
         }
       }
     }
@@ -553,7 +558,7 @@ static int breadh_first_search(int maximum_number_of_vertices, hash_table_node_t
       }
     }
   }
-
+printf("Cheguei aqui!");
   return visited;
 }
 
@@ -616,9 +621,10 @@ static void path_finder(hash_table_t *hash_table, const char *from_word, const c
 
   
   printf("path from %s to %s:\n", from_word, to_word);
+  printf("%d \n",hash_table->number_of_entries);
 
   int path = breadh_first_search(hash_table->number_of_entries, hash_table->heads, from_word, to_word);
-  printf("path %d \n", path);
+  printf("path %d \n", path); 
   if (path == -1)
   {
     printf("no path found \n");
@@ -631,7 +637,6 @@ static void path_finder(hash_table_t *hash_table, const char *from_word, const c
       printf("breath - %s ", hash_table->heads[i]->head);
     }
   }
-  
 }
 
 //
