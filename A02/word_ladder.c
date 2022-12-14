@@ -185,6 +185,7 @@ static void hash_table_grow(hash_table_t *hash_table)
   //
   // complete this
   //
+
   hash_table_node_t **old_heads = hash_table->heads;
   unsigned int old_hash_table_size = hash_table->hash_table_size;
   unsigned int i;
@@ -206,6 +207,8 @@ static void hash_table_grow(hash_table_t *hash_table)
       node = next;
     }
   }
+
+  printf("hash_table_grow: old hash table size = %d new hash table size = %u\n", old_hash_table_size, hash_table->hash_table_size);
 
   free(old_heads);
 }
@@ -256,7 +259,7 @@ static hash_table_node_t *find_word(hash_table_t *hash_table, const char *word, 
     node->next = hash_table->heads[i];
     hash_table->heads[i] = node;
 
-    if (hash_table->number_of_entries > hash_table->hash_table_size / 2)
+    if (hash_table->number_of_entries > hash_table->hash_table_size * 2)
       hash_table_grow(hash_table);
 
     hash_table->number_of_entries++;
@@ -349,8 +352,22 @@ static void add_edge(hash_table_t *hash_table, hash_table_node_t *from, const ch
   //
   // complete this
   //
-
   if (to != NULL)
+  {
+
+    link = allocate_adjacency_node();
+    link->vertex = to;
+    link->next = from->head;
+    from->head = link;
+    to->representative = from;
+    hash_table->number_of_edges++;
+    from->number_of_edges++;
+    to->number_of_edges++;
+
+    // printf("Adicionei a aresta %s - %s\n", from, to);
+  }
+
+  /*  if (to != NULL)
   {
     from_representative = find_representative(from);
     to_representative = find_representative(to);
@@ -365,7 +382,7 @@ static void add_edge(hash_table_t *hash_table, hash_table_node_t *from, const ch
       //printf("link - %s \n", link->vertex);
     }
     // printf("Adicionei a aresta %s - %s\n", from, to);
-  }
+  } */
 }
 
 //
@@ -462,104 +479,8 @@ static int breadh_first_search(int maximum_number_of_vertices, hash_table_node_t
   // complete this
   // shortest path between two words using breadh_first_search algorithm
   // while curre
-  if (goal == NULL)
-  {
-    printf("Goal == NULL\n");
-    return -1;
-  }
 
-  int visited = 0;
-  int i = 0;
-  int j = 0;
-  int k = 0;
-
-  hash_table_node_t *current = origin;
-  hash_table_node_t *next = NULL;
-  hash_table_node_t *previous = NULL;
-
-  while (current != goal)
-  {
-    if (current->visited == 0)
-    {
-      current->visited = 1;
-      visited++;
-      printf("current != NULL\n");
-    }
-
-    if (current->next != NULL)
-    {
-      next = current->next;
-      if (next->visited == 0)
-      {
-        next->previous = current;
-        next->visited = 1;
-        visited++;
-        printf("current->next != NULL\n");
-      }
-    }
-
-    if (current->previous != NULL)
-    {
-      previous = current->previous;
-      if (previous->visited == 0)
-      {
-        previous->previous = current;
-        previous->visited = 1;
-        visited++;
-        printf("current->previous != NULL\n");
-      }
-    }
-
-    if (current->head != NULL)
-    {
-      for (i = 0; i < current->number_of_edges; i++)
-      {
-        if (current->visited == 0)
-        {
-          current->previous = current;
-          current->visited = 1;
-          visited++;
-          printf("current->head != NULL\n");
-        }
-      }
-    }
-
-    if (current->next != NULL)
-    {
-      current = current->next;
-    }
-    else if (current->previous != NULL)
-    {
-      current = current->previous;
-    }
-    else if (current->head != NULL)
-    {
-      for (j = 0; j < current->number_of_edges; j++)
-      {
-        if (current->visited == 0)
-        {
-          current = current->head;
-          break;
-        }
-      }
-    }
-    else
-    {
-      for (k = 0; k < maximum_number_of_vertices; k++)
-      {
-        if (list_of_vertices[k] != NULL)
-        {
-          if (list_of_vertices[k]->visited == 0)
-          {
-            current = list_of_vertices[k];
-            break;
-          }
-        }
-      }
-    }
-  }
-printf("Cheguei aqui!");
-  return visited;
+  return -1;
 }
 
 //
@@ -586,8 +507,29 @@ static void list_connected_component(hash_table_t *hash_table, const char *word)
     return;
   }
 
+
   int visited = breadh_first_search(hash_table->number_of_edges, hash_table->heads, word, NULL);
   */
+  hash_table_node_t *to;
+
+  to = find_word(hash_table, word, 0);
+  if (to == NULL)
+  {
+    printf("word not found\n");
+    return;
+  }
+  printf("numero de vertices da plavra %s - %d \n", word, to->number_of_edges);
+  printf("connected component of %s:\n", word);
+  int edges = to->number_of_edges;
+  while (edges > 0)
+  {
+    printf("word %s \n", to->head->vertex);
+    printf("numero de vertices da plavra %s - %d \n", to->word, edges);
+    edges--;
+
+  }
+  
+
 }
 
 //
@@ -619,12 +561,10 @@ static void path_finder(hash_table_t *hash_table, const char *from_word, const c
 
   // print the path
 
-  
   printf("path from %s to %s:\n", from_word, to_word);
-  printf("numero de entradas - %d \n",hash_table->number_of_entries);
-
-  int path = breadh_first_search(hash_table->number_of_entries, hash_table->heads, from_word, to_word);
-  printf("path %d \n", path); 
+  printf("numero de entradas - %d \n", hash_table->number_of_entries);
+  /*
+  printf("path %d \n", path);
   if (path == -1)
   {
     printf("no path found \n");
@@ -633,10 +573,10 @@ static void path_finder(hash_table_t *hash_table, const char *from_word, const c
   {
     for (int i = 0; i < path; i++)
     {
-
       printf("breath - %s ", hash_table->heads[i]->head);
     }
   }
+  */
 }
 
 //
@@ -681,7 +621,7 @@ int main(int argc, char **argv)
   fclose(fp);
 
   // printf("hash table size: %u\n",hash_table->hash_table_size);
-  // print_table(hash_table);
+  print_table(hash_table);
 
   // find all similar words
   for (i = 0u; i < hash_table->hash_table_size; i++)
@@ -689,6 +629,8 @@ int main(int argc, char **argv)
       similar_words(hash_table, node);
   graph_info(hash_table);
 
+  printf("number of vertices: %u\n", hash_table->number_of_entries);
+  printf("number of edges: %u\n", hash_table->number_of_edges);
   // ask what to do
   for (;;)
   {
