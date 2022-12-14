@@ -222,7 +222,6 @@ static void hash_table_free(hash_table_t *hash_table)
     hash_table_node_t *node = hash_table->heads[i];
     while (node != NULL)
     {
-
       while (node->head != NULL)
       {
         adjacency_node_t *next_head = node->head->next;
@@ -363,7 +362,7 @@ static void add_edge(hash_table_t *hash_table, hash_table_node_t *from, const ch
       from_representative->head = link;
       to_representative->representative = from_representative;
 
-      // printf("link - %s \n", link->vertex);
+      //printf("link - %s \n", link->vertex);
     }
     // printf("Adicionei a aresta %s - %s\n", from, to);
   }
