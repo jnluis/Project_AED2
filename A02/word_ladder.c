@@ -225,19 +225,17 @@ static void hash_table_free(hash_table_t *hash_table)
     hash_table_node_t *node = hash_table->heads[i];
     while (node != NULL)
     {
-      /*
       while (node->head != NULL)
       {
         adjacency_node_t *next_head = node->head->next;
         free_adjacency_node(node->head);
         node->head = next_head;
       }
-      */
+
       if (node->head != NULL)
       {
         free_adjacency_node(node->head);
       }
-
       hash_table_node_t *next = node->next;
       free_hash_table_node(node);
       node = next;
@@ -311,6 +309,47 @@ void print_table(hash_table_t *hash_table)
   }
 }
 
+void count_colisions(hash_table_t *hash_table)
+{
+  int colisions = 0;
+
+  int array_colisions[hash_table->hash_table_size];
+
+  for (unsigned int i = 0; i < hash_table->hash_table_size; i++)
+  {
+    if (hash_table->heads[i] != NULL)
+    {
+      hash_table_node_t *tmp = hash_table->heads[i];
+      while (tmp != NULL)
+      {
+        colisions++;
+        tmp = tmp->next;
+      }
+    }
+
+    array_colisions[i] = colisions;
+  }
+
+  int size = sizeof(array_colisions);
+  int array_numColisions[10];
+
+  for (int i = 0; i < 10; i++)
+  {
+    for (unsigned int x = 0; x < hash_table->hash_table_size; x++)
+    {
+      if (array_colisions[x] == i)
+      {
+        array_numColisions[i]++;
+      }
+    }
+  }
+
+  for (int i = 0; i < 10; i++)
+  {
+    printf("Number of colisions %i: %i\n", i, array_numColisions[i]);
+  }
+}
+
 //------------------------------------------------------------
 
 //
@@ -358,12 +397,15 @@ static void add_edge(hash_table_t *hash_table, hash_table_node_t *from, const ch
   //
   // complete this
   //
-  /*
+
+  //printf("from %s to %s \n", from, to);
+
   if (to != NULL)
   {
 
     link = allocate_adjacency_node();
     link->vertex = to;
+    //printf("link %s \n", link->vertex);
     link->next = from->head;
     from->head = link;
     to->representative = from;
@@ -373,26 +415,31 @@ static void add_edge(hash_table_t *hash_table, hash_table_node_t *from, const ch
 
     // printf("Adicionei a aresta %s - %s\n", from, to);
   }
-  */
 
-  if (to != NULL)
-  {
-    from_representative = find_representative(from);
-    to_representative = find_representative(to);
-    if (from_representative != to_representative)
-    {
-      link = allocate_adjacency_node();
-      link->vertex = to_representative;
-      link->next = from_representative->head;
-      from_representative->head = link;
-      to_representative->representative = from_representative;
-      hash_table->number_of_edges++;
-      from_representative->number_of_edges++;
-      to_representative->number_of_edges++;
-      // printf("link - %s \n", link->vertex);
-    }
-    printf("Adicionei a aresta %s - %s\n", from, to);// dá para ver todas as arestas adicionadas
-  }
+  /*
+   if (to != NULL)
+   {
+     from_representative = find_representative(from);
+     printf("from representative %s \n", from_representative->word);
+     to_representative = find_representative(to);
+     printf("to representative %s \n", to_representative->word);
+     if (from_representative != to_representative)
+     {
+       link = allocate_adjacency_node();
+       printf("link %s \n", link->vertex);
+       link->vertex = to_representative;
+       printf("link vertex %s \n", link->vertex);
+       link->next = from_representative->head;
+       from_representative->head = link;
+       to_representative->representative = from_representative;
+       hash_table->number_of_edges++;
+       from_representative->number_of_edges++;
+       to_representative->number_of_edges++;
+       // printf("link - %s \n", link->vertex);
+     }
+     printf("Adicionei a aresta %s - %s\n", from, to);// dá para ver todas as arestas adicionadas
+   }
+   */
 }
 
 //
@@ -521,6 +568,7 @@ static void list_connected_component(hash_table_t *hash_table, const char *word)
   int visited = breadh_first_search(hash_table->number_of_edges, hash_table->heads, word, NULL);
   */
   hash_table_node_t *to;
+  adjacency_node_t *adjacency_node;
 
   to = find_word(hash_table, word, 0);
   if (to == NULL)
@@ -530,8 +578,16 @@ static void list_connected_component(hash_table_t *hash_table, const char *word)
   }
 
   printf("numero de vertices da palavra %s - %d \n", word, to->number_of_edges);
-  printf("word %s \n",to->representative);
-
+  adjacency_node = to->head;
+  int edges = to->number_of_edges;
+  while (adjacency_node != NULL)
+  {
+    printf("word %s \n", adjacency_node->vertex);
+    printf("to_head %s \n", adjacency_node->next->vertex);
+    adjacency_node = adjacency_node->next;
+    printf("to_head %s \n", adjacency_node->vertex);
+    edges--;
+  }
 
   /* ERRADO
     while (edges > 0)
@@ -634,7 +690,7 @@ int main(int argc, char **argv)
 
   // printf("hash table size: %u\n",hash_table->hash_table_size);
   print_table(hash_table);
-
+  count_colisions(hash_table);
   // find all similar words
   for (i = 0u; i < hash_table->hash_table_size; i++)
     for (node = hash_table->heads[i]; node != NULL; node = node->next)
