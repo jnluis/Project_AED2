@@ -291,7 +291,7 @@ static hash_table_node_t *find_word(hash_table_t *hash_table, const char *word, 
 
 void print_table(hash_table_t *hash_table)
 {
-  for (int i = 0; i < hash_table->hash_table_size; i++)
+  for (unsigned int i = 0; i < hash_table->hash_table_size; i++)
   {
     if (hash_table->heads[i] == NULL)
     {
@@ -389,10 +389,9 @@ static void add_edge(hash_table_t *hash_table, hash_table_node_t *from, const ch
       hash_table->number_of_edges++;
       from_representative->number_of_edges++;
       to_representative->number_of_edges++;
-
       // printf("link - %s \n", link->vertex);
     }
-    // printf("Adicionei a aresta %s - %s\n", from, to);
+    printf("Adicionei a aresta %s - %s\n", from, to);// dá para ver todas as arestas adicionadas
   }
 }
 
@@ -530,7 +529,9 @@ static void list_connected_component(hash_table_t *hash_table, const char *word)
     return;
   }
 
-  printf("numero de vertices da plavra %s - %d \n", word, to->number_of_edges);
+  printf("numero de vertices da palavra %s - %d \n", word, to->number_of_edges);
+  printf("word %s \n",to->representative);
+
 
   /* ERRADO
     while (edges > 0)
