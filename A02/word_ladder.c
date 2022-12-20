@@ -421,15 +421,11 @@ static void add_edge(hash_table_t *hash_table, hash_table_node_t *from, const ch
     if (from->head == NULL)
     {
       from->head = link;
-      to->number_of_edges++;
-      to->number_of_vertices = to->number_of_vertices + 2;
     }
     else
     {
       link->next = from->head;
       from->head = link;
-      to->number_of_edges++;
-      to->number_of_vertices = to->number_of_vertices + 2;
     }
 
     link = allocate_adjacency_node();
@@ -439,19 +435,17 @@ static void add_edge(hash_table_t *hash_table, hash_table_node_t *from, const ch
     if (to->head == NULL)
     {
       to->head = link;
-      from->number_of_edges++;
-      from->number_of_vertices = from->number_of_vertices + 2;
     }
-
     else
     {
       link->next = to->head;
       to->head = link;
-      from->number_of_edges++;
-      from->number_of_vertices = from->number_of_vertices + 2;
     }
 
     hash_table->number_of_edges++;
+
+    from->number_of_edges++;
+    to->number_of_edges++;
 
     if (from_representative != to_representative)
     {
@@ -459,12 +453,18 @@ static void add_edge(hash_table_t *hash_table, hash_table_node_t *from, const ch
       {
         to_representative->representative = from_representative;
         from_representative->number_of_vertices += to_representative->number_of_vertices;
+        from->number_of_vertices = from->number_of_vertices + to->number_of_vertices;
+
       }
       else
       {
         from_representative->representative = to_representative;
         to_representative->number_of_vertices += from_representative->number_of_vertices;
+        to->number_of_vertices = to->number_of_vertices + from->number_of_vertices;
       }
+    }else{
+      from->number_of_vertices = from->number_of_vertices + 1;
+      to->number_of_vertices = to->number_of_vertices + 1;
     }
   }
 }
@@ -561,12 +561,13 @@ static void similar_words(hash_table_t *hash_table, hash_table_node_t *from)
 static int breadh_first_search(int maximum_number_of_vertices, hash_table_node_t **list_of_vertices, hash_table_node_t *origin, hash_table_node_t *goal)
 {
   // complete this
+  // bfs find the shortest path from origin to goal
+
   list_of_vertices[0] = origin;
   origin->visited = 1;
   origin->previous = NULL;
-
-  int i = 0;
   int j = 1;
+  int i = 0;
 
   while (i < j && i < maximum_number_of_vertices)
   {
@@ -589,6 +590,7 @@ static int breadh_first_search(int maximum_number_of_vertices, hash_table_node_t
     i++;
   }
 
+  // print the path from origin to goal or print all the vertices if goal is null
   if (goal == NULL)
   {
     for (int i = 0; i < j; i++)
@@ -598,15 +600,15 @@ static int breadh_first_search(int maximum_number_of_vertices, hash_table_node_t
   }
   else
   {
-    // print the path from origin to goal
     hash_table_node_t *current = goal;
-    int i = 0;
+    int x = 0;
     while (current != NULL)
     {
-      printf("[%d] %s \n", i, current->word);
+      printf("[%d] %s \n", x , current->word);
       current = current->previous;
-      i++;
+      x++;
     }
+
   }
 
   // mark all vertices as not visited
@@ -636,18 +638,16 @@ static void list_connected_component(hash_table_t *hash_table, const char *word)
     printf("Word not found.\n");
     return;
   }
-  else
-  {
-    printf("Word Find - %s\n", node);
-  }
-  printf("n vertices - %d", node->number_of_vertices);
+
+  printf("n vertices representante - %d\n", node->representative->number_of_vertices );
+  printf("n vertices - %d\n", node->number_of_vertices );
   printf("connected component of %s:\n", word);
 
   // create a list of vertices empty
-  hash_table_node_t **list_of_vertices = (hash_table_node_t **)malloc(60 * sizeof(hash_table_node_t *));
+  hash_table_node_t **list_of_vertices = (hash_table_node_t **)malloc(node->representative->number_of_vertices * sizeof(hash_table_node_t *));
 
   // breadth first search
-  int num_of_vertices = breadh_first_search(60, list_of_vertices, node, NULL);
+  int num_of_vertices = breadh_first_search(20, list_of_vertices, node, NULL);
 
   // free the list of vertices
   free(list_of_vertices);
@@ -687,8 +687,8 @@ static void path_finder(hash_table_t *hash_table, const char *from_word, const c
   hash_table_node_t *to = find_word(hash_table, to_word, 0);
 
   // create a list of vertices empty
-  hash_table_node_t **list_of_vertices = (hash_table_node_t **)malloc(60 * sizeof(hash_table_node_t *));
-  int num_of_vertices = breadh_first_search(60, list_of_vertices, to, from);
+  hash_table_node_t **list_of_vertices = (hash_table_node_t **)malloc(from->representative->number_of_vertices * sizeof(hash_table_node_t *));
+  int num_of_vertices = breadh_first_search(20, list_of_vertices, to, from);
 
   // free the list of vertices
   free(list_of_vertices);
