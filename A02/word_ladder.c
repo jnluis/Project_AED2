@@ -647,7 +647,7 @@ static void list_connected_component(hash_table_t *hash_table, const char *word)
   hash_table_node_t **list_of_vertices = (hash_table_node_t **)malloc(node->representative->number_of_vertices * sizeof(hash_table_node_t *));
 
   // breadth first search
-  int num_of_vertices = breadh_first_search(20, list_of_vertices, node, NULL);
+  int num_of_vertices = breadh_first_search(hash_table->number_of_entries, list_of_vertices, node, NULL);
 
   // free the list of vertices
   free(list_of_vertices);
@@ -688,7 +688,8 @@ static void path_finder(hash_table_t *hash_table, const char *from_word, const c
 
   // create a list of vertices empty
   hash_table_node_t **list_of_vertices = (hash_table_node_t **)malloc(from->representative->number_of_vertices * sizeof(hash_table_node_t *));
-  int num_of_vertices = breadh_first_search(20, list_of_vertices, to, from);
+  list_of_vertices = memset(list_of_vertices, NULL, from->representative->number_of_vertices * sizeof(hash_table_node_t *));
+  int num_of_vertices = breadh_first_search(hash_table->number_of_entries, list_of_vertices, to, from);
 
   // free the list of vertices
   free(list_of_vertices);
