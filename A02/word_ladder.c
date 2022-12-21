@@ -166,8 +166,7 @@ static hash_table_t *hash_table_create(void)
     fprintf(stderr, "create_hash_table: out of memory\n");
     exit(1);
   }
-  //
-  // complete this
+
   hash_table->hash_table_size = 2000;
   hash_table->number_of_entries = 0;
   hash_table->number_of_edges = 0;
@@ -181,15 +180,12 @@ static hash_table_t *hash_table_create(void)
   for (i = 0u; i < hash_table->hash_table_size; i++)
     hash_table->heads[i] = NULL;
 
-  //
+  
   return hash_table;
 }
 
 static void hash_table_grow(hash_table_t *hash_table)
 {
-  //
-  // complete this
-  //
 
   hash_table_node_t **old_heads = hash_table->heads;
   unsigned int old_hash_table_size = hash_table->hash_table_size;
@@ -227,16 +223,13 @@ static void hash_table_grow(hash_table_t *hash_table)
 
 static void hash_table_free(hash_table_t *hash_table)
 {
-  //
-  // complete this
-  //
+
   unsigned int i;
   hash_table_node_t *node;
   hash_table_node_t *next;
   adjacency_node_t *adjacency_node;
   adjacency_node_t *next_adjacency_node;
 
-  // free all hash table nodes and adjacency nodes
   for (i = 0u; i < hash_table->hash_table_size; i++)
   {
     node = hash_table->heads[i];
@@ -267,8 +260,6 @@ static hash_table_node_t *find_word(hash_table_t *hash_table, const char *word, 
   unsigned int i;
 
   i = crc32(word) % hash_table->hash_table_size;
-  //
-  // complete this
 
   if (insert_if_not_found)
   {
@@ -276,11 +267,11 @@ static hash_table_node_t *find_word(hash_table_t *hash_table, const char *word, 
     node = allocate_hash_table_node();
     strcpy(node->word, word);
 
-    node->next = hash_table->heads[i];
-    hash_table->heads[i] = node;
-
     if (hash_table->number_of_entries > hash_table->hash_table_size)
       hash_table_grow(hash_table);
+
+    node->next = hash_table->heads[i];
+    hash_table->heads[i] = node;
 
     hash_table->number_of_entries++;
     node->representative = node;
@@ -293,7 +284,6 @@ static hash_table_node_t *find_word(hash_table_t *hash_table, const char *word, 
     {
       if (strcmp(node->word, word) == 0)
       {
-        // printf("Encontrei a palavra %s \n", word);
         return node;
       }
       node = node->next;
