@@ -309,7 +309,7 @@ void print_table(hash_table_t *hash_table)
       hash_table_node_t *tmp = hash_table->heads[i];
       while (tmp != NULL)
       {
-        printf("%s -", tmp->word);
+        printf("%s ->", tmp->word);
         tmp = tmp->next;
       }
       printf("\n");
@@ -553,7 +553,6 @@ static int breadh_first_search(int maximum_number_of_vertices, hash_table_node_t
 {
   // complete this
   // bfs find the shortest path from origin to goal
-
   list_of_vertices[0] = origin;
   origin->visited = 1;
   origin->previous = NULL;
@@ -632,9 +631,17 @@ static void list_connected_component(hash_table_t *hash_table, const char *word)
   printf("connected component of %s:\n", word);
 
   // create a list of vertices empty
-  hash_table_node_t **list_of_vertices = (hash_table_node_t **)malloc(hash_table->number_of_entries * sizeof(hash_table_node_t *));
-  list_of_vertices = memset(list_of_vertices, 0, hash_table->number_of_entries * sizeof(hash_table_node_t *));
+  hash_table_node_t **list_of_vertices;
+  list_of_vertices = (hash_table_node_t **)malloc((size_t)hash_table->number_of_entries * sizeof(hash_table_node_t *));
+  if (list_of_vertices == NULL)
+  {
+    fprintf(stderr, "malloc failed: out of memory\n");
+    exit(1);
+  }
 
+  list_of_vertices = memset(list_of_vertices, 0, hash_table->number_of_entries * sizeof(hash_table_node_t *));
+  printf("list_of_vertices: %p\n", list_of_vertices);
+  
   // breadth first search
   int num_of_vertices = breadh_first_search(hash_table->number_of_entries, list_of_vertices, node, NULL);
 
@@ -676,7 +683,7 @@ static void path_finder(hash_table_t *hash_table, const char *from_word, const c
   hash_table_node_t *to = find_word(hash_table, to_word, 0);
 
   // create a list of vertices empty
-  hash_table_node_t **list_of_vertices = (hash_table_node_t **)malloc(hash_table->number_of_entries * sizeof(hash_table_node_t *));
+  hash_table_node_t **list_of_vertices = (hash_table_node_t **)malloc((size_t)hash_table->number_of_entries * sizeof(hash_table_node_t *));
   list_of_vertices = memset(list_of_vertices, 0, hash_table->number_of_entries * sizeof(hash_table_node_t *));
 
   // breadth first search
