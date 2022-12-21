@@ -454,7 +454,6 @@ static void add_edge(hash_table_t *hash_table, hash_table_node_t *from, const ch
         to_representative->representative = from_representative;
         from_representative->number_of_vertices += to_representative->number_of_vertices;
         from->number_of_vertices = from->number_of_vertices + to->number_of_vertices;
-
       }
       else
       {
@@ -462,7 +461,9 @@ static void add_edge(hash_table_t *hash_table, hash_table_node_t *from, const ch
         to_representative->number_of_vertices += from_representative->number_of_vertices;
         to->number_of_vertices = to->number_of_vertices + from->number_of_vertices;
       }
-    }else{
+    }
+    else
+    {
       from->number_of_vertices = from->number_of_vertices + 1;
       to->number_of_vertices = to->number_of_vertices + 1;
     }
@@ -604,11 +605,10 @@ static int breadh_first_search(int maximum_number_of_vertices, hash_table_node_t
     int x = 0;
     while (current != NULL)
     {
-      printf("[%d] %s \n", x , current->word);
+      printf("[%d] %s \n", x, current->word);
       current = current->previous;
       x++;
     }
-
   }
 
   // mark all vertices as not visited
@@ -639,12 +639,11 @@ static void list_connected_component(hash_table_t *hash_table, const char *word)
     return;
   }
 
-  printf("n vertices representante - %d\n", node->representative->number_of_vertices );
-  printf("n vertices - %d\n", node->number_of_vertices );
   printf("connected component of %s:\n", word);
 
   // create a list of vertices empty
-  hash_table_node_t **list_of_vertices = (hash_table_node_t **)malloc(node->representative->number_of_vertices * sizeof(hash_table_node_t *));
+  hash_table_node_t **list_of_vertices = (hash_table_node_t **)malloc(hash_table->number_of_entries * sizeof(hash_table_node_t *));
+  list_of_vertices = memset(list_of_vertices, 0, hash_table->number_of_entries * sizeof(hash_table_node_t *));
 
   // breadth first search
   int num_of_vertices = breadh_first_search(hash_table->number_of_entries, list_of_vertices, node, NULL);
@@ -687,9 +686,12 @@ static void path_finder(hash_table_t *hash_table, const char *from_word, const c
   hash_table_node_t *to = find_word(hash_table, to_word, 0);
 
   // create a list of vertices empty
-  hash_table_node_t **list_of_vertices = (hash_table_node_t **)malloc(from->representative->number_of_vertices * sizeof(hash_table_node_t *));
-  list_of_vertices = memset(list_of_vertices, NULL, from->representative->number_of_vertices * sizeof(hash_table_node_t *));
+  hash_table_node_t **list_of_vertices = (hash_table_node_t **)malloc(hash_table->number_of_entries * sizeof(hash_table_node_t *));
+  list_of_vertices = memset(list_of_vertices, 0, hash_table->number_of_entries * sizeof(hash_table_node_t *));
+
+  // breadth first search
   int num_of_vertices = breadh_first_search(hash_table->number_of_entries, list_of_vertices, to, from);
+
 
   // free the list of vertices
   free(list_of_vertices);
@@ -736,9 +738,6 @@ int main(int argc, char **argv)
 
   fclose(fp);
 
-  // printf("hash table size: %u\n",hash_table->hash_table_size);
-  // print_table(hash_table);
-  count_colisions(hash_table);
   // find all similar words
   for (i = 0u; i < hash_table->hash_table_size; i++)
     for (node = hash_table->heads[i]; node != NULL; node = node->next)
@@ -753,7 +752,9 @@ int main(int argc, char **argv)
     fprintf(stderr, "Your wish is my command:\n");
     fprintf(stderr, "  1 WORD       (list the connected component WORD belongs to)\n");
     fprintf(stderr, "  2 FROM TO    (list the shortest path from FROM to TO)\n");
-    fprintf(stderr, "  3            (terminate)\n");
+    fprintf(stderr, "  3            (print hash table)\n");
+    fprintf(stderr, "  4            (print number of colisions in hash table)\n");
+    fprintf(stderr, "  5            (terminate)\n");
     fprintf(stderr, "> ");
     if (scanf("%99s", word) != 1)
       break;
@@ -773,6 +774,14 @@ int main(int argc, char **argv)
       path_finder(hash_table, from, to);
     }
     else if (command == 3)
+    {
+      print_table(hash_table);
+    }
+    else if (command == 4)
+    {
+      count_colisions(hash_table);
+    }
+    else if (command == 5)
     {
       printf("fim\n");
       break;
