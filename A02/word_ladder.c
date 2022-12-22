@@ -45,7 +45,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-
+#include <time.h>
 //
 // static configuration
 //
@@ -321,7 +321,7 @@ void print_table(hash_table_t *hash_table)
 void count_colisions(hash_table_t *hash_table)
 {
   int colisions = 0;
-
+  
   int array_numColisions[11] = {0};
   for (unsigned int i = 0; i < hash_table->hash_table_size; i++)
   {
@@ -340,12 +340,20 @@ void count_colisions(hash_table_t *hash_table)
       }
       array_numColisions[colisions]++;
     }
+    
   }
 
+  printf("Number of positions on hash table with x words: \n");
+  int n_colisions = 0;
   for (int i = 0; i < 11; i++)
   {
-    printf("Number of positions on hash table with %i words: %i\n", i, array_numColisions[i]);
+    printf("  %i words: %i\n", i, array_numColisions[i]);
+    if (i > 1)
+    {
+      n_colisions = n_colisions + array_numColisions[i];
+    }
   }
+  printf("Rate of colisions: %0.02f%%\n", (double)n_colisions/hash_table->hash_table_size*100);
 }
 
 //------------------------------------------------------------
@@ -356,26 +364,20 @@ void count_colisions(hash_table_t *hash_table)
 
 static hash_table_node_t *find_representative(hash_table_node_t *node)
 {
-  hash_table_node_t *representative, *next_node;
+  hash_table_node_t *representative, *next_node, *current_node;
 
   //
   // complete this
   //
-  representative = node;
+  // find link to representative node
+  for (representative = node; representative->representative != representative; representative = representative->representative)
+    ;
 
-  // Find the representative of the node
-  while (representative->representative != representative)
+  // path compression
+  for (current_node = node; current_node != representative; current_node = next_node)
   {
-    representative = representative->representative;
-  }
-
-  // Compress the path
-
-  next_node = node->representative;
-  while (next_node != representative)
-  {
-    next_node->representative = representative;
-    next_node = next_node->representative;
+    next_node = current_node->representative;
+    current_node->representative = representative;
   }
 
   return representative;
@@ -406,11 +408,13 @@ static void add_edge(hash_table_t *hash_table, hash_table_node_t *from, const ch
     if (from->head == NULL)
     {
       from->head = link;
+      from->number_of_edges++;
     }
     else
     {
       link->next = from->head;
       from->head = link;
+      from->number_of_edges++;
     }
 
     link = allocate_adjacency_node();
@@ -420,18 +424,16 @@ static void add_edge(hash_table_t *hash_table, hash_table_node_t *from, const ch
     if (to->head == NULL)
     {
       to->head = link;
+      to->number_of_edges++;
     }
     else
     {
       link->next = to->head;
       to->head = link;
+      to->number_of_edges++;
     }
 
     hash_table->number_of_edges++;
-    from->number_of_edges++;
-    to->number_of_edges++;
-    from->number_of_vertices++;
-    to->number_of_vertices++;
 
     from_representative = find_representative(from);
     to_representative = find_representative(to);
@@ -620,24 +622,22 @@ static void list_connected_component(hash_table_t *hash_table, const char *word)
     return;
   }
 
-  printf("vertices: %d \n", node->representative->number_of_vertices);
-  printf("connected component of %s:\n", word);
-
   // create a list of vertices empty
   hash_table_node_t **list_of_vertices;
-  list_of_vertices = (hash_table_node_t **)malloc((size_t)hash_table->number_of_entries * sizeof(hash_table_node_t *));
+  list_of_vertices = (hash_table_node_t **)malloc((size_t)node->representative->number_of_vertices * sizeof(hash_table_node_t *));
   if (list_of_vertices == NULL)
   {
     fprintf(stderr, "malloc failed: out of memory\n");
     exit(1);
   }
 
-  for (unsigned int i = 0u; i < hash_table->number_of_entries; i++)
+  for (unsigned int i = 0u; i < node->representative->number_of_vertices; i++)
     list_of_vertices[i] = NULL;
-  printf("list_of_vertices: %p\n", list_of_vertices);
+
+  printf("Connected component %s belgons to: \n", node->word);
 
   // breadth first search
-  int num_of_vertices = breadh_first_search(hash_table->number_of_entries, list_of_vertices, node, NULL);
+  int num_of_vertices = breadh_first_search(node->representative->number_of_vertices, list_of_vertices, node, NULL);
 
   // free the list of vertices
   free(list_of_vertices);
@@ -657,6 +657,7 @@ static int connected_component_diameter(hash_table_node_t *node)
   //
   // complete this
   //
+
   return diameter;
 }
 
@@ -678,18 +679,18 @@ static void path_finder(hash_table_t *hash_table, const char *from_word, const c
 
   // create a list of vertices empty
   hash_table_node_t **list_of_vertices;
-  list_of_vertices = (hash_table_node_t **)malloc((size_t)hash_table->number_of_entries * sizeof(hash_table_node_t *));
+  list_of_vertices = (hash_table_node_t **)malloc((size_t)from->representative->number_of_vertices * sizeof(hash_table_node_t *));
   if (list_of_vertices == NULL)
   {
     fprintf(stderr, "malloc failed: out of memory\n");
     exit(1);
   }
 
-  for (unsigned int i = 0u; i < hash_table->number_of_entries; i++)
+  for (unsigned int i = 0u; i < from->representative->number_of_vertices; i++)
     list_of_vertices[i] = 0;
 
   // breadth first search
-  int num_of_vertices = breadh_first_search(hash_table->number_of_entries, list_of_vertices, to, from);
+  int num_of_vertices = breadh_first_search(from->representative->number_of_vertices, list_of_vertices, to, from);
 
   // free the list of vertices
   free(list_of_vertices);
@@ -704,6 +705,9 @@ static void graph_info(hash_table_t *hash_table)
   //
   // complete this
   //
+  printf("Number of vertices in the graph: %d\n", hash_table->number_of_entries);
+  printf("Number of edges in the graph: %d\n", hash_table->number_of_edges);
+  
 }
 
 //
@@ -718,6 +722,7 @@ int main(int argc, char **argv)
   unsigned int i;
   int command;
   FILE *fp;
+  clock_t tic = clock();
 
   // initialize hash table
   hash_table = hash_table_create();
@@ -740,19 +745,22 @@ int main(int argc, char **argv)
   for (i = 0u; i < hash_table->hash_table_size; i++)
     for (node = hash_table->heads[i]; node != NULL; node = node->next)
       similar_words(hash_table, node);
-  graph_info(hash_table);
 
-  printf("number of vertices: %u\n", hash_table->number_of_entries);
-  printf("number of edges: %u\n", hash_table->number_of_edges);
+  clock_t toc = clock();
+
+  printf("\nHash table construction time: %0.03f seconds\n", (double)(toc - tic) / CLOCKS_PER_SEC);
+  
   // ask what to do
   for (;;)
   {
+    fprintf(stderr, "\n");
     fprintf(stderr, "Your wish is my command:\n");
     fprintf(stderr, "  1 WORD           (list the connected component WORD belongs to)\n");
     fprintf(stderr, "  2 FROM TO        (list the shortest path from FROM to TO)\n");
-    fprintf(stderr, "  3 SEE HASH TABLE (print hash table)\n");
-    fprintf(stderr, "  4 SEE COLISIONS  (print number of colisions in hash table)\n");
-    fprintf(stderr, "  5                (terminate)\n");
+    fprintf(stderr, "  3 See Hash Table (print hash table)\n");
+    fprintf(stderr, "  4 See Colisions  (print number of colisions in hash table)\n");
+    fprintf(stderr, "  5 See graph info (print information about the graph)\n");
+    fprintf(stderr, "  6                (terminate)\n");
     fprintf(stderr, "> ");
     if (scanf("%99s", word) != 1)
       break;
@@ -781,13 +789,17 @@ int main(int argc, char **argv)
     }
     else if (command == 5)
     {
+      graph_info(hash_table);
 
+    }
+    else if (command == 6)
+    {
       break;
     }
   }
 
   // clean up
   hash_table_free(hash_table);
-  printf("fim\n");
+  printf("FIM\n");
   return 0;
 }
