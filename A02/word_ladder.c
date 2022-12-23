@@ -190,7 +190,7 @@ static void hash_table_grow(hash_table_t *hash_table)
   unsigned int old_hash_table_size = hash_table->hash_table_size;
   unsigned int i;
 
-  hash_table->hash_table_size = hash_table->hash_table_size * 2;
+  hash_table->hash_table_size = hash_table->hash_table_size + (hash_table->hash_table_size/2) 
   hash_table->heads = (hash_table_node_t **)malloc((size_t)hash_table->hash_table_size * sizeof(hash_table_node_t *));
 
   if (hash_table->heads == NULL)
