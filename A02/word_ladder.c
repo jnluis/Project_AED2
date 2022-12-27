@@ -547,7 +547,7 @@ static void similar_words(hash_table_t *hash_table, hash_table_node_t *from)
 // returns the number of vertices visited; if the last one is goal, following the previous links gives the shortest path between goal and origin
 //
 
-static int breadh_first_search(int maximum_number_of_vertices, hash_table_node_t **list_of_vertices, hash_table_node_t *origin, hash_table_node_t *goal)
+static hash_table_node_t **breadh_first_search(int maximum_number_of_vertices, hash_table_node_t **list_of_vertices, hash_table_node_t *origin, hash_table_node_t *goal)
 {
   // complete this
   // bfs find the shortest path from origin to goal
@@ -578,25 +578,7 @@ static int breadh_first_search(int maximum_number_of_vertices, hash_table_node_t
     i++;
   }
 
-  // print the path from origin to goal or print all the vertices if goal is null
-  if (goal == NULL)
-  {
-    for (int i = 0; i < j; i++)
-    {
-      printf("[%d] %s \n", i, list_of_vertices[i]->word);
-    }
-  }
-  else
-  {
-    hash_table_node_t *current = goal;
-    int x = 0;
-    while (current != NULL)
-    {
-      printf("[%d] %s \n", x, current->word);
-      current = current->previous;
-      x++;
-    }
-  }
+  origin->last_word = list_of_vertices[j - 1];
 
   // mark all vertices as not visited
   for (int i = 0; i < j; i++)
@@ -604,7 +586,7 @@ static int breadh_first_search(int maximum_number_of_vertices, hash_table_node_t
     list_of_vertices[i]->visited = 0;
   }
 
-  return j;
+  return list_of_vertices;
 }
 
 //
@@ -638,12 +620,16 @@ static void list_connected_component(hash_table_t *hash_table, const char *word)
   for (unsigned int i = 0u; i < node->representative->number_of_vertices; i++)
     list_of_vertices[i] = NULL;
 
-  printf("representative: %s\n", node->representative->word);
-  printf("number of vertices: %d \n", node->representative->number_of_vertices);
   printf("Connected component %s belgons to: \n", node->word);
 
   // breadth first search
-  int num_of_vertices = breadh_first_search(node->representative->number_of_vertices, list_of_vertices, node, NULL);
+  list_of_vertices = breadh_first_search(node->representative->number_of_vertices, list_of_vertices, node, NULL);
+
+  // print the path from origin to goal or print all the vertices if goal is null
+  for (int i = 0; i < node->representative->number_of_vertices; i++)
+  {
+    printf("[%d] %s \n", i, list_of_vertices[i]->word);
+  }
 
   // free the list of vertices
   free(list_of_vertices);
@@ -668,43 +654,10 @@ static int connected_component_diameter(hash_table_node_t *node)
     exit(1);
   }
 
-  list_of_vertices[0] = node;
-  node->visited = 1;
-  node->previous = NULL;
-  int j = 1;
-  int i = 0;
-
-  while (i < j && i < node->representative->number_of_vertices)
-  {
-
-    hash_table_node_t *current = list_of_vertices[i];
-    adjacency_node_t *adjacency_node = current->head;
-
-    while (adjacency_node != NULL)
-    {
-      if (adjacency_node->vertex->visited == 0)
-      {
-        adjacency_node->vertex->visited = 1;
-        adjacency_node->vertex->previous = current;
-        list_of_vertices[j] = adjacency_node->vertex;
-        j++;
-      }
-
-      adjacency_node = adjacency_node->next;
-    }
-    i++;
-  }
-
-  node->last_word = list_of_vertices[j - 1];
-
-  // mark all vertices as not visited
-  for (i = 0; i < j; i++)
-  {
-    list_of_vertices[i]->visited = 0;
-  }
+  list_of_vertices = breadh_first_search(node->representative->number_of_vertices, list_of_vertices, node, NULL);
 
   // calculate diameter
-  for (i = 0; i < j; i++)
+  for (unsigned int i = 0; i < node->representative->number_of_vertices; i++)
   {
     hash_table_node_t *current = list_of_vertices[i];
     int x = 0;
@@ -725,7 +678,6 @@ static int connected_component_diameter(hash_table_node_t *node)
     largest_diameter_node = node;
   }
 
-  // free the list of vertices
   free(list_of_vertices);
 
   return diameter;
@@ -756,7 +708,17 @@ static void path_finder(hash_table_t *hash_table, const char *from_word, const c
     list_of_vertices[i] = 0;
 
   // breadth first search
-  int num_of_vertices = breadh_first_search(from->representative->number_of_vertices, list_of_vertices, to, from);
+  list_of_vertices = breadh_first_search(from->representative->number_of_vertices, list_of_vertices, to, from);
+
+  // print the path from origin to goal or print all the vertices if goal is null
+  hash_table_node_t *current = from;
+  int x = 0;
+  while (current != NULL)
+  {
+    printf("[%d] %s \n", x, current->word);
+    current = current->previous;
+    x++;
+  }
 
   // free the list of vertices
   free(list_of_vertices);
@@ -768,16 +730,6 @@ static void path_finder(hash_table_t *hash_table, const char *from_word, const c
 
 static void graph_info(hash_table_t *hash_table)
 {
-
-  printf("Number of vertices in the graph: %d\n", hash_table->number_of_entries);
-  printf("Number of edges in the graph: %d\n", hash_table->number_of_edges);
-}
-
-static int connected_component_info(hash_table_t *hash_table)
-{
-  //
-  // complete this
-  //
   int number_of_connected_components = 0;
 
   hash_table_node_t *node;
@@ -794,7 +746,86 @@ static int connected_component_info(hash_table_t *hash_table)
     }
   }
 
-  return number_of_connected_components;
+  printf("Number of vertices in the graph: %d\n", hash_table->number_of_entries);
+  printf("Number of edges in the graph: %d\n", hash_table->number_of_edges);
+  printf("Number of connected components: %d\n", number_of_connected_components);
+
+  unsigned int j = 0;
+  int diameter = 0;
+  int array[number_of_connected_components];
+
+  for (i = 0u; i < hash_table->hash_table_size; i++)
+  {
+    for (node = hash_table->heads[i]; node != NULL; node = node->next)
+    {
+      if (node != NULL && node->representative == node)
+      {
+        diameter = connected_component_diameter(node);
+        array[j] = diameter;
+        j++;
+      }
+    }
+  }
+
+  // sort the array
+  int current = 0;
+  for (i = 0; i < number_of_connected_components; i++)
+  {
+    for (j = i + 1; j < number_of_connected_components; j++)
+    {
+      if (array[i] > array[j])
+      {
+        current = array[i];
+        array[i] = array[j];
+        array[j] = current;
+      }
+    }
+  }
+
+  printf("\nNumber of connected components with x vertices:\n");
+  int count = 1;
+  for (i = 0; i < number_of_connected_components; i++)
+  {
+    if (i == number_of_connected_components - 1 && array[i] != array[i - 1])
+    {
+      printf("  %d : %d\n", array[i], count);
+      break;
+    }
+
+    if (array[i] == array[i + 1])
+    {
+      count++;
+    }
+    else
+    {
+      printf("  %d : %d\n", array[i], count);
+      count = 1;
+    }
+  }
+
+  printf("\nNumber of connected components with a diameter of: \n");
+  count = 1;
+  for (i = 0; i < number_of_connected_components; i++)
+  {
+    if (i == number_of_connected_components - 1 && array[i] != array[i - 1])
+    {
+      printf("  %d : %d\n", array[i], count);
+      break;
+    }
+
+    if (array[i] == array[i + 1])
+    {
+      count++;
+    }
+    else
+    {
+      printf("  %d : %d\n", array[i], count);
+      count = 1;
+    }
+  }
+
+  printf("\nLargest word ladder: \n");
+  path_finder(hash_table, largest_diameter_node->word, largest_diameter_node->last_word->word);
 }
 
 //
@@ -847,9 +878,7 @@ int main(int argc, char **argv)
     fprintf(stderr, "  3 See Hash Table                \n");
     fprintf(stderr, "  4 See Colisions                 \n");
     fprintf(stderr, "  5 See graph info                \n");
-    fprintf(stderr, "  6 See connected components info \n");
-    fprintf(stderr, "  7 See diameters                 \n");
-    fprintf(stderr, "  8                               (terminate)\n");
+    fprintf(stderr, "  6 (terminate)\n");
     fprintf(stderr, "> ");
     if (scanf("%99s", word) != 1)
       break;
@@ -882,129 +911,11 @@ int main(int argc, char **argv)
     }
     else if (command == 6)
     {
-      unsigned int i;
-      unsigned int j = 0;
-      int number_of_connected_components = connected_component_info(hash_table);
-      int array[number_of_connected_components];
-
-      for (i = 0u; i < hash_table->hash_table_size; i++)
-      {
-        for (node = hash_table->heads[i]; node != NULL; node = node->next)
-        {
-          if (node != NULL && node->representative == node)
-          {
-            array[j] = node->number_of_vertices;
-            j++;
-          }
-        }
-      }
-
-      // sort the array
-      int current;
-      for (i = 0; i < number_of_connected_components; i++)
-      {
-        for (j = i + 1; j < number_of_connected_components; j++)
-        {
-          if (array[i] > array[j])
-          {
-            current = array[i];
-            array[i] = array[j];
-            array[j] = current;
-          }
-        }
-      }
-
-      printf("Number of connected components: %d\n", number_of_connected_components);
-
-      printf("\nNumber of connected components with x vertices:\n");
-      int count = 1;
-      for (i = 0; i < number_of_connected_components; i++)
-      {
-        if (i == number_of_connected_components - 1 && array[i] != array[i - 1])
-        {
-          printf("  %d : %d\n", array[i], count);
-          break;
-        }
-
-        if (array[i] == array[i + 1])
-        {
-          count++;
-        }
-        else
-        {
-          printf("  %d : %d\n", array[i], count);
-          count = 1;
-        }
-      }
-    }
-    else if (command == 7)
-    {
-      unsigned int i;
-      unsigned int j = 0;
-      int diameter = 0;
-      int n_cc = connected_component_info(hash_table);
-      int array[n_cc];
-
-      for (i = 0u; i < hash_table->hash_table_size; i++)
-      {
-        for (node = hash_table->heads[i]; node != NULL; node = node->next)
-        {
-          if (node != NULL && node->representative == node)
-          {
-            diameter = connected_component_diameter(node);
-            array[j] = diameter;
-            j++;
-          }
-        }
-      }
-
-      // sort the array
-      int current = 0;
-      for (i = 0; i < n_cc; i++)
-      {
-        for (j = i + 1; j < n_cc; j++)
-        {
-          if (array[i] > array[j])
-          {
-            current = array[i];
-            array[i] = array[j];
-            array[j] = current;
-          }
-        }
-      }
-
-      printf("Number of connected components with a diameter of: \n");
-      int count = 1;
-      for (i = 0; i < n_cc; i++)
-      {
-        if (i == n_cc - 1 && array[i] != array[i - 1])
-        {
-          printf("  %d : %d\n", array[i], count);
-          break;
-        }
-
-        if (array[i] == array[i + 1])
-        {
-          count++;
-        }
-        else
-        {
-          printf("  %d : %d\n", array[i], count);
-          count = 1;
-        }
-      }
-
-      printf("\nLargest word ladder: \n");
-      path_finder(hash_table, largest_diameter_node->word, largest_diameter_node->last_word->word);
-    }
-    else if (command == 8)
-    {
       break;
     }
   }
 
   // clean up
   hash_table_free(hash_table);
-  printf("FIM\n");
   return 0;
 }
