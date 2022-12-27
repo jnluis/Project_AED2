@@ -782,29 +782,8 @@ static void graph_info(hash_table_t *hash_table)
     }
   }
 
-  printf("\nNumber of connected components with x vertices:\n");
-  int count = 1;
-  for (i = 0; i < number_of_connected_components; i++)
-  {
-    if (i == number_of_connected_components - 1 && array[i] != array[i - 1])
-    {
-      printf("  %d : %d\n", array[i], count);
-      break;
-    }
-
-    if (array[i] == array[i + 1])
-    {
-      count++;
-    }
-    else
-    {
-      printf("  %d : %d\n", array[i], count);
-      count = 1;
-    }
-  }
-
   printf("\nNumber of connected components with a diameter of: \n");
-  count = 1;
+  int count = 1;
   for (i = 0; i < number_of_connected_components; i++)
   {
     if (i == number_of_connected_components - 1 && array[i] != array[i - 1])
