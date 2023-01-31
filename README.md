@@ -1,1 +1,3 @@
-# Project_AED2
+## Algoritmos e Estruturas de Dados
+##### 2º Projeto - Word ladder
+##### Nota: 19
